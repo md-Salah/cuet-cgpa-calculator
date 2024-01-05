@@ -1,5 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
+import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
 
 session = requests.session()
 
@@ -11,21 +14,18 @@ def published_result():
 
     response = session.get(url, data=payload, headers=headers)
 
-    # print(response.text)
     soup = BeautifulSoup(response.text, 'html.parser')
-    # print(soup.prettify())
-    # print(soup.title)
+
+    assert soup.title is not None, 'Title not found'
     if soup.title.text == "Login To Students Portal":
-        print('Your password might be incorrect')
+        # st.write('Your password might be incorrect')
         return []
     
     result_table = soup.find(id="dynamic-table")
-    trs = result_table.find_all('tr')
-    # print(trs)
+    trs = result_table.find_all('tr') # type: ignore
     results = []
     for tr in trs[1:]:
         td = tr.find_all('td')
-        # print(td)
         
         # Course Details
         code = td[0].text
@@ -53,34 +53,49 @@ def login(id, password):
         "TE": "trailers"
     }
 
-    response = session.post(url, data=payload, headers=headers)
+    session.post(url, data=payload, headers=headers)
 
-    # print(response.headers)
-    # print(session.cookies)
-    # print(response.text)
     return session.cookies
 
 
 def show_term_details(current_term, results):
     courses = [course for course in results if course[2] == current_term]
-    print(f'\n{current_term}:')
-    
     theory = len([course for course in courses if course[3] == 'No'])
-    print(f'Theory Course: {theory}')
-    print(f'Sessional Course: {(len(courses)-theory)}')
     
     total_credit = sum([float(course[1]) for course in courses])
-    print(f'Credit: {total_credit}')
     # Sum of all credit * gpa
     if total_credit:
         _sum = sum([ (float(course[1]) * float(gpa[f'{course[4]}'])) for course in courses])
-        print(f'GPA: {(current_gpa := round(_sum/total_credit, 2))}')
+        current_gpa = round(_sum/total_credit, 2)
     else:
         current_gpa = 0
+        
+    data = {
+        'Term': current_term,
+        'Theory Course': theory,
+        'Sessional Course': (len(courses)-theory),
+        'Credit': total_credit,
+        'GPA': current_gpa
+    }
     
-    # print(courses)
-    return total_credit, current_gpa
+    return data
+
+def plot_cgpa(df):
+    df['GPA'] = df['GPA'].astype(float)
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.plot(df['Term'], df['GPA'], marker='o', linestyle='-')
     
+    ax.set_xlabel('Term')
+    ax.set_ylabel('GPA')
+    ax.set_title('GPA vs Term')
+    ax.tick_params(axis='x', rotation=45)
+    ax.set_yticks([0, 1, 2, 3, 4])
+
+    for i, txt in enumerate(df['GPA']):
+        ax.annotate(f'{txt:.2f}', (df['Term'][i], df['GPA'][i]), textcoords="offset points", xytext=(0, 5), ha='center')
+    
+    st.pyplot(fig)
+
 
 if __name__ == '__main__':
     gpa = {
@@ -95,23 +110,50 @@ if __name__ == '__main__':
         'D': 2.0,
     }
     
-    id = input('Id: ')
-    password = input('Password: ')
+    submitted = False
+    st.write('# CUET CGPA Calculator')
     
-    login(id, password)
-    results = published_result()
+    with st.form("my_form"):
+        id = st.text_input('Your Student Id:', placeholder='1704123')
+        password = st.text_input('Your Student Portal Password:', placeholder='********')
+        submitted = st.form_submit_button(label="Submit")
     
-    if results:
-        print('Published Result:', len(results))
-        cgpa, credit = 0, 0
-        for level in range(1, 5):
-            for term in range(1, 3):
-                current_term = f'Level {level} - Term {term}'
-                total_credit, current_gpa = show_term_details(current_term, results)
-                cgpa += (total_credit * current_gpa)
-                credit += total_credit
+    
+    if submitted:
+        st.write('Fetching your result...')
+        login(id, password)
+        results = published_result()
+        
+        
+        if results:
+            all_term = []
+            st.write('Published Result:', len(results))
+            cgpa, credit = 0, 0
+            for level in range(1, 5):
+                for term in range(1, 3):
+                    current_term = f'Level {level} - Term {term}'
+                    data = show_term_details(current_term, results)
+                    cgpa += (data['Credit'] * data['GPA'])
+                    credit += data['Credit']
+                    all_term.append(data)
+            
+            df = pd.DataFrame(all_term)
+            df['GPA'] = df['GPA'].round(2).astype(str)
+            df['Credit'] = df['Credit'].round(2).astype(str)
+            
+            st.table(df)        
+
+            st.write('\nTotal Credit Completed:', credit)
+            if credit:
+                st.write(f'### CGPA: {round(cgpa/credit, 2)}')
                 
-        print('\nTotal Credit Completed:', credit)
-        if credit:
-            print(f'CGPA: {round(cgpa/credit, 2)}')
+            # Plot
+            plot_cgpa(df)
+            st.balloons()
+            
+        else:
+            st.write('Result Not Found. Id or Password might be incorrect.')
+        
+    st.write('##### \nDeveloped by [Mohammad Salah Uddin](https://www.facebook.com/salahCuetCse) (1704123)')
+    st.write('###### [Contact](mailto:mdsalah.connect@gmail.com)\t[Github](https://github.com/md-Salah/)')
     
