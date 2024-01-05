@@ -96,7 +96,7 @@ if __name__ == '__main__':
     }
     
     id = input('Id: ')
-    password = input('Password: ') or '85745330'
+    password = input('Password: ')
     
     login(id, password)
     results = published_result()
