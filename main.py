@@ -141,11 +141,12 @@ if __name__ == '__main__':
             df['GPA'] = df['GPA'].round(2).astype(str)
             df['Credit'] = df['Credit'].round(2).astype(str)
             
-            st.table(df)        
+            st.table(df)  
 
             st.write('\nTotal Credit Completed:', credit)
             if credit:
                 st.write(f'### CGPA: {round(cgpa/credit, 2)}')
+            st.warning('**CUET student portal may not show all the result. So, the result may not be accurate.**')      
                 
             # Plot
             plot_cgpa(df)
@@ -154,6 +155,6 @@ if __name__ == '__main__':
         else:
             st.write('Result Not Found. Id or Password might be incorrect.')
         
-    st.write('##### \nDeveloped by [Mohammad Salah Uddin](https://www.facebook.com/salahCuetCse) (1704123)')
+    st.write('##### Developed by [Mohammad Salah Uddin](https://www.facebook.com/salahCuetCse) (1704123)')
     st.write('###### [Contact](mailto:mdsalah.connect@gmail.com)\t[Github](https://github.com/md-Salah/)')
     
