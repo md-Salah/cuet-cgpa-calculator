@@ -110,13 +110,20 @@ if __name__ == '__main__':
         'D': 2.0,
     }
     
+    # Notice
+    st.write('### Without IICT permission we are unable to operate this platform.')
+    st.write('### We are sorry 😐')
+
+    st.write('##### Wish you a good CGPA 😊')
+    st.divider()
+    
     submitted = False
     st.write('# CUET CGPA Calculator')
     
     with st.form("my_form"):
-        id = st.text_input('Your Student Id:', placeholder='1704123')
-        password = st.text_input('Your Student Portal Password:', placeholder='********')
-        submitted = st.form_submit_button(label="Submit")
+        id = st.text_input('Your Student Id:', placeholder='1704123', disabled=True)
+        password = st.text_input('Your Student Portal Password:', placeholder='********', disabled=True)
+        submitted = st.form_submit_button(label="Submit", disabled=True)
     
     
     if submitted:
@@ -155,6 +162,7 @@ if __name__ == '__main__':
         else:
             st.write('Result Not Found. Id or Password might be incorrect.')
         
+    st.divider()
     st.write('##### Developed by [Mohammad Salah Uddin](https://www.facebook.com/salahCuetCse) (1704123)')
     st.write('###### [Contact](mailto:mdsalah.connect@gmail.com)\t[Github](https://github.com/md-Salah/)')
     
