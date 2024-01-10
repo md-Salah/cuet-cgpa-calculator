@@ -46,7 +46,6 @@ def login(id, password):
 
     payload = f"user_email={id}&user_password={password}&loginuser=Sign%2BIn"
     headers = {
-        # "cookie": "PHPSESSID=dfn5555rvm360rae3gov4dvf02",
         "Content-Type": "application/x-www-form-urlencoded",
         "Sec-Fetch-Site": "same-origin",
         "Sec-Fetch-User": "?1",
